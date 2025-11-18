@@ -2,15 +2,19 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
-import { Upload as UploadIcon, Image as ImageIcon } from "lucide-react";
+import { Upload as UploadIcon, Image as ImageIcon, Camera } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import FloatingRupees from "@/components/FloatingRupees";
+import CameraCapture from "@/components/CameraCapture";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { toast } from "sonner";
 
 const Upload = () => {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const { isMobileOrTablet } = useDeviceDetection();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0];
@@ -33,8 +37,14 @@ const Upload = () => {
     maxFiles: 1,
   });
 
+  const handleCameraCapture = (imageData: string) => {
+    setPreview(imageData);
+    setFile(null); // Clear file since we're using camera
+    toast.success("Photo captured successfully!");
+  };
+
   const handleContinue = () => {
-    if (file && preview) {
+    if (preview) {
       // Store the image data in sessionStorage for the next page
       sessionStorage.setItem('billImage', preview);
       navigate('/review');
@@ -46,8 +56,15 @@ const Upload = () => {
       <FloatingRupees />
       <Navbar />
       
+      {showCamera && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
+      
       <main className="relative z-10 container mx-auto px-6 pt-32 pb-20">
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className={`mx-auto space-y-8 ${isMobileOrTablet ? 'max-w-2xl' : 'max-w-3xl'}`}>
           <div className="text-center space-y-4 animate-fade-in">
             <h1 className="text-4xl lg:text-5xl font-bold">
               Upload Your <span className="text-gradient-gold">Bill</span>
@@ -104,7 +121,22 @@ const Upload = () => {
             </div>
           </div>
 
-          {file && (
+          {/* Camera Button - Mobile/Tablet Only */}
+          {isMobileOrTablet && !preview && (
+            <div className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              <Button
+                variant="luxury-outline"
+                size="lg"
+                onClick={() => setShowCamera(true)}
+                className="w-full h-14"
+              >
+                <Camera className="mr-2 h-5 w-5" />
+                Click Picture
+              </Button>
+            </div>
+          )}
+
+          {preview && (
             <div className="flex justify-center animate-fade-in">
               <Button 
                 variant="luxury" 
