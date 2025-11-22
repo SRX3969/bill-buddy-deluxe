@@ -41,16 +41,75 @@ function resizeImageIfNeeded(
   return false;
 }
 
+// Deskew image by detecting text orientation
+function deskewImage(imageData: ImageData): ImageData {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // Convert to grayscale for edge detection
+  const gray = new Uint8ClampedArray(width * height);
+  for (let i = 0; i < data.length; i += 4) {
+    const idx = i / 4;
+    gray[idx] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+  }
+  
+  // Simple Sobel edge detection to find dominant angle
+  const edges: number[] = [];
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const gx = gray[idx + 1] - gray[idx - 1];
+      const gy = gray[idx + width] - gray[idx - width];
+      edges.push(Math.atan2(gy, gx));
+    }
+  }
+  
+  // Find most common angle (histogram approach)
+  const bins = 180;
+  const histogram = new Array(bins).fill(0);
+  edges.forEach(angle => {
+    const deg = Math.round(((angle * 180 / Math.PI) + 90) % 180);
+    histogram[deg]++;
+  });
+  
+  const dominantAngle = histogram.indexOf(Math.max(...histogram)) - 90;
+  const skewAngle = dominantAngle * Math.PI / 180;
+  
+  // Only apply correction if skew is significant (> 0.5 degrees)
+  if (Math.abs(dominantAngle) < 0.5) return imageData;
+  
+  // Rotate image by detected skew angle
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return imageData;
+  
+  ctx.putImageData(imageData, 0, 0);
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+  const tempCtx = tempCanvas.getContext('2d');
+  if (!tempCtx) return imageData;
+  
+  tempCtx.translate(width / 2, height / 2);
+  tempCtx.rotate(-skewAngle);
+  tempCtx.drawImage(canvas, -width / 2, -height / 2);
+  
+  return tempCtx.getImageData(0, 0, width, height);
+}
+
 // Apply contrast enhancement
-function enhanceContrast(imageData: ImageData, factor: number = 1.5): ImageData {
+function enhanceContrast(imageData: ImageData, factor: number = 1.8): ImageData {
   const data = imageData.data;
   const contrast = (factor - 1) * 255;
   const intercept = 128 * (1 - factor);
 
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = data[i] * factor + intercept;     // R
-    data[i + 1] = data[i + 1] * factor + intercept; // G
-    data[i + 2] = data[i + 2] * factor + intercept; // B
+    data[i] = Math.min(255, Math.max(0, data[i] * factor + intercept));
+    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] * factor + intercept));
+    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] * factor + intercept));
   }
 
   return imageData;
@@ -237,6 +296,9 @@ export async function preprocessImage(
 
         // Get image data for processing
         let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // Apply deskewing first
+        imageData = deskewImage(imageData);
 
         // Apply contrast enhancement
         if (options.enhanceContrast !== false) {

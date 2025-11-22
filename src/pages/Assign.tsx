@@ -91,13 +91,13 @@ const Assign = () => {
       <FloatingRupees />
       <Navbar />
       
-      <main className="relative z-10 container mx-auto px-6 pt-32 pb-20">
+      <main className="relative z-10 container mx-auto px-4 sm:px-6 pt-32 pb-20">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-4 animate-fade-in">
-            <h1 className="text-4xl lg:text-5xl font-bold">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
               Assign <span className="text-gradient-gold">Items</span>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
               Assign quantities to each person for every item
             </p>
           </div>
@@ -106,22 +106,22 @@ const Assign = () => {
             {items.map((item, index) => (
               <div 
                 key={item.id}
-                className={`card-luxury p-6 animate-fade-in transition-all ${
+                className={`card-luxury p-4 sm:p-6 animate-fade-in transition-all ${
                   isOverAssigned(item.id) ? 'border-warning' : ''
                 }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-semibold">{item.name}</h3>
-                      <p className="text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="w-full sm:w-auto">
+                      <h3 className="text-lg sm:text-xl font-semibold">{item.name}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         ₹{item.price} × {item.quantity} = ₹{(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Assigned</p>
-                      <p className={`text-lg font-bold ${
+                    <div className="text-left sm:text-right w-full sm:w-auto">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Assigned</p>
+                      <p className={`text-base sm:text-lg font-bold ${
                         isOverAssigned(item.id) ? 'text-warning' : 
                         getTotalAssigned(item.id) === item.quantity ? 'text-success' : 
                         'text-primary'
@@ -131,15 +131,15 @@ const Assign = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
                     {people.map((person) => (
                       <div key={person} className="space-y-2">
-                        <label className="text-sm font-medium">{person}</label>
+                        <label className="text-xs sm:text-sm font-medium">{person}</label>
                         <Select
                           value={assignments[item.id]?.[person]?.toString() || '0'}
                           onValueChange={(value) => updateAssignment(item.id, person, parseInt(value))}
                         >
-                          <SelectTrigger className="border-primary/30">
+                          <SelectTrigger className="border-primary/30 h-9 sm:h-10">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -155,7 +155,7 @@ const Assign = () => {
                   </div>
 
                   {isOverAssigned(item.id) && (
-                    <p className="text-sm text-warning flex items-center gap-2">
+                    <p className="text-xs sm:text-sm text-warning flex items-center gap-2">
                       <span>⚠️</span>
                       Total assigned quantity exceeds available quantity
                     </p>
@@ -165,12 +165,12 @@ const Assign = () => {
             ))}
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center px-4">
             <Button 
               variant="luxury" 
               size="lg"
               onClick={handleCalculate}
-              className="min-w-[200px]"
+              className="w-full sm:w-auto min-w-[200px]"
             >
               Calculate Split
             </Button>

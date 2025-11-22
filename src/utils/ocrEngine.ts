@@ -11,6 +11,21 @@ export interface ExtractedItem {
   suggestion?: string;
 }
 
+export interface BillMetadata {
+  merchantName?: string;
+  billNumber?: string;
+  date?: string;
+  subtotal?: number;
+  tax?: number;
+  discount?: number;
+  total?: number;
+}
+
+export interface OCRResult {
+  items: ExtractedItem[];
+  metadata: BillMetadata;
+}
+
 // Extract quantity from text
 function extractQuantity(text: string): { quantity: number; cleanText: string } {
   const patterns = [
@@ -62,20 +77,80 @@ function extractPrice(text: string): { price: number; cleanText: string } | null
   return null;
 }
 
+// Extract merchant name from top lines
+function extractMerchantName(lines: string[]): string | undefined {
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const line = lines[i].trim();
+    if (line.length > 3 && line.length < 50 && !/\d/.test(line)) {
+      return line;
+    }
+  }
+  return undefined;
+}
+
+// Extract bill number
+function extractBillNumber(text: string): string | undefined {
+  const patterns = [
+    /bill\s*(?:no|number|#)[\s:]*([A-Z0-9-]+)/i,
+    /invoice\s*(?:no|number|#)[\s:]*([A-Z0-9-]+)/i,
+    /receipt\s*(?:no|number|#)[\s:]*([A-Z0-9-]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  return undefined;
+}
+
+// Extract date
+function extractDate(text: string): string | undefined {
+  const patterns = [
+    /(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/,
+    /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4})/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  return undefined;
+}
+
+// Extract totals and taxes
+function extractMetadata(text: string): Pick<BillMetadata, 'subtotal' | 'tax' | 'discount' | 'total'> {
+  const metadata: Pick<BillMetadata, 'subtotal' | 'tax' | 'discount' | 'total'> = {};
+  
+  const subtotalMatch = text.match(/(?:sub\s*total|subtotal)[\s:]*₹?\s*(\d+(?:\.\d{2})?)/i);
+  if (subtotalMatch) metadata.subtotal = parseFloat(subtotalMatch[1]);
+  
+  const taxMatch = text.match(/(?:tax|gst|cgst\s*\+\s*sgst)[\s:]*₹?\s*(\d+(?:\.\d{2})?)/i);
+  if (taxMatch) metadata.tax = parseFloat(taxMatch[1]);
+  
+  const discountMatch = text.match(/(?:discount)[\s:]*₹?\s*(\d+(?:\.\d{2})?)/i);
+  if (discountMatch) metadata.discount = parseFloat(discountMatch[1]);
+  
+  const totalMatch = text.match(/(?:grand\s*total|total|net\s*amount)[\s:]*₹?\s*(\d+(?:\.\d{2})?)/i);
+  if (totalMatch) metadata.total = parseFloat(totalMatch[1]);
+  
+  return metadata;
+}
+
 // Check if line is likely a bill item (not total, GST, etc.)
 function isLikelyBillItem(text: string): boolean {
   const excludePatterns = [
     /total/i,
     /subtotal/i,
     /grand\s*total/i,
-    /gst/i,
-    /cgst/i,
-    /sgst/i,
-    /tax/i,
+    /^gst/i,
+    /^cgst/i,
+    /^sgst/i,
+    /^tax[\s:]/i,
     /service\s*charge/i,
     /discount/i,
     /bill\s*no/i,
     /invoice/i,
+    /receipt/i,
     /date/i,
     /time/i,
     /phone/i,
@@ -96,10 +171,18 @@ function isLikelyBillItem(text: string): boolean {
   return true;
 }
 
-// Parse OCR text into structured items
-export function parseOCRText(text: string): ExtractedItem[] {
+// Parse OCR text into structured items and metadata
+export function parseOCRText(text: string): OCRResult {
   const lines = text.split('\n').filter(line => line.trim().length > 0);
   const items: ExtractedItem[] = [];
+  
+  // Extract metadata
+  const metadata: BillMetadata = {
+    merchantName: extractMerchantName(lines),
+    billNumber: extractBillNumber(text),
+    date: extractDate(text),
+    ...extractMetadata(text),
+  };
 
   for (let line of lines) {
     line = line.trim();
@@ -149,14 +232,14 @@ export function parseOCRText(text: string): ExtractedItem[] {
     });
   }
 
-  return items;
+  return { items, metadata };
 }
 
 // Main OCR function
 export async function performOCR(
   imageDataUrl: string,
   onProgress?: (progress: number) => void
-): Promise<ExtractedItem[]> {
+): Promise<OCRResult> {
   console.log('Starting OCR...');
 
   const worker = await Tesseract.createWorker('eng', 1, {
@@ -170,18 +253,18 @@ export async function performOCR(
   try {
     // Configure Tesseract for better accuracy
     await worker.setParameters({
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789₹.,-()x/ ',
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789₹.,-()x/:# ',
       tessedit_pageseg_mode: Tesseract.PSM.AUTO,
     });
 
     const { data: { text } } = await worker.recognize(imageDataUrl);
     console.log('Raw OCR text:', text);
 
-    const items = parseOCRText(text);
-    console.log('Parsed items:', items);
+    const result = parseOCRText(text);
+    console.log('Parsed result:', result);
 
     await worker.terminate();
-    return items;
+    return result;
   } catch (error) {
     console.error('OCR error:', error);
     await worker.terminate();

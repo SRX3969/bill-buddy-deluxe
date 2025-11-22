@@ -42,18 +42,18 @@ const AddPeople = () => {
       <FloatingRupees />
       <Navbar />
       
-      <main className="relative z-10 container mx-auto px-6 pt-32 pb-20">
+      <main className="relative z-10 container mx-auto px-4 sm:px-6 pt-32 pb-20">
         <div className="max-w-2xl mx-auto space-y-8">
           <div className="text-center space-y-4 animate-fade-in">
-            <h1 className="text-4xl lg:text-5xl font-bold">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
               Who's <span className="text-gradient-gold">Sharing?</span>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
               Add the names of everyone splitting this bill
             </p>
           </div>
 
-          <div className="card-luxury p-8 space-y-4">
+          <div className="card-luxury p-4 sm:p-6 lg:p-8 space-y-4">
             {people.map((person, index) => (
               <div 
                 key={index}
@@ -64,16 +64,16 @@ const AddPeople = () => {
                   value={person}
                   onChange={(e) => updatePerson(index, e.target.value)}
                   placeholder={`Person ${index + 1} name`}
-                  className="flex-1 h-12 text-lg border-primary/30 focus:border-primary"
+                  className="flex-1 h-10 sm:h-12 text-base sm:text-lg border-primary/30 focus:border-primary"
                 />
                 {people.length > 1 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => removePerson(index)}
-                    className="h-12 w-12 p-0 text-destructive hover:bg-destructive/10"
+                    className="h-10 w-10 sm:h-12 sm:w-12 p-0 text-destructive hover:bg-destructive/10"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 )}
               </div>
@@ -82,19 +82,19 @@ const AddPeople = () => {
             <Button
               variant="luxury-outline"
               onClick={addPerson}
-              className="w-full h-12"
+              className="w-full h-10 sm:h-12"
             >
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               Add Person
             </Button>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center px-4">
             <Button 
               variant="luxury" 
               size="lg"
               onClick={handleContinue}
-              className="min-w-[200px]"
+              className="w-full sm:w-auto min-w-[200px]"
             >
               Continue to Assignment
             </Button>
