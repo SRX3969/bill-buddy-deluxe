@@ -104,12 +104,12 @@ const Index = () => {
       </main>
 
       <footer className="relative z-10 border-t border-muted/30 mt-20">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
               © 2024 Bill Buddy. All rights reserved.
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-right">
               Made with <span className="text-primary">✨</span> for fair splits
             </p>
           </div>

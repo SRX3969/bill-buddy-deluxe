@@ -98,31 +98,31 @@ const Summary = () => {
       <FloatingRupees />
       <Navbar />
       
-      <main className="relative z-10 container mx-auto px-6 pt-32 pb-20">
+      <main className="relative z-10 container mx-auto px-4 sm:px-6 pt-32 pb-20">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-4 animate-fade-in">
-            <h1 className="text-4xl lg:text-5xl font-bold">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
               Your Split <span className="text-gradient-gold">Summary</span>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
               Here's how the bill is split between everyone
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
             {summaries.map((summary, index) => (
               <div 
                 key={summary.name}
-                className="card-luxury p-6 space-y-4 animate-fade-in"
+                className="card-luxury p-4 sm:p-6 space-y-4 animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="border-b border-muted pb-3">
-                  <h2 className="text-2xl font-bold text-gradient-gold">{summary.name}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gradient-gold">{summary.name}</h2>
                 </div>
 
                 <div className="space-y-2">
                   {summary.items.map((item, i) => (
-                    <div key={i} className="flex justify-between text-sm">
+                    <div key={i} className="flex justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">
                         {item.name} ×{item.quantity}
                       </span>
@@ -132,15 +132,15 @@ const Summary = () => {
                 </div>
 
                 <div className="border-t border-muted pt-3 space-y-2">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs sm:text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-medium">₹{summary.subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs sm:text-sm">
                     <span className="text-muted-foreground">Tax (18%)</span>
                     <span className="font-medium">₹{summary.tax.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t border-muted">
+                  <div className="flex justify-between text-base sm:text-lg font-bold pt-2 border-t border-muted">
                     <span>Total</span>
                     <span className="text-primary">₹{summary.total.toFixed(2)}</span>
                   </div>
@@ -149,11 +149,12 @@ const Summary = () => {
             ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
             <Button 
               variant="luxury" 
               size="lg"
               onClick={handleDownload}
+              className="w-full sm:w-auto"
             >
               <Download className="mr-2 h-5 w-5" />
               Download Summary
@@ -162,6 +163,7 @@ const Summary = () => {
               variant="luxury-outline" 
               size="lg"
               onClick={handleNewBill}
+              className="w-full sm:w-auto"
             >
               <Home className="mr-2 h-5 w-5" />
               Start New Bill

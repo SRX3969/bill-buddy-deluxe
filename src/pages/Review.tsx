@@ -2,23 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Plus, Minus, Lightbulb } from "lucide-react";
+import { Pencil, Trash2, Plus, Minus, Lightbulb, Store, Calendar, FileText } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import FloatingRupees from "@/components/FloatingRupees";
 import { toast } from "sonner";
 import { preprocessImage } from "@/utils/imagePreprocessing";
-import { performOCR, ExtractedItem } from "@/utils/ocrEngine";
-
-interface BillItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import { performOCR, ExtractedItem, BillMetadata } from "@/utils/ocrEngine";
 
 const Review = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<ExtractedItem[]>([]);
+  const [metadata, setMetadata] = useState<BillMetadata>({});
   const [isLoading, setIsLoading] = useState(true);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -46,12 +40,14 @@ const Review = () => {
 
       // Step 2: Perform OCR
       toast.info("Extracting text...");
-      const extractedItems = await performOCR(
+      const result = await performOCR(
         preprocessed.dataUrl,
         (progress) => setOcrProgress(progress)
       );
 
-      if (extractedItems.length === 0) {
+      setMetadata(result.metadata);
+
+      if (result.items.length === 0) {
         toast.warning("No items detected. Please add them manually.");
         // Add empty item for manual entry
         setItems([{
@@ -62,8 +58,8 @@ const Review = () => {
           confidence: 100,
         }]);
       } else {
-        setItems(extractedItems);
-        toast.success(`Extracted ${extractedItems.length} items!`);
+        setItems(result.items);
+        toast.success(`Extracted ${result.items.length} items!`);
       }
 
       setIsLoading(false);
@@ -150,44 +146,98 @@ const Review = () => {
       <FloatingRupees />
       <Navbar />
       
-      <main className="relative z-10 container mx-auto px-6 pt-32 pb-20">
+      <main className="relative z-10 container mx-auto px-4 sm:px-6 pt-32 pb-20">
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="text-center space-y-4 animate-fade-in">
-            <h1 className="text-4xl lg:text-5xl font-bold">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
               Recognized <span className="text-gradient-gold">Items</span>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground">
               Tap to edit any item or adjust quantities
             </p>
           </div>
+
+          {/* Bill Metadata */}
+          {(metadata.merchantName || metadata.billNumber || metadata.date || metadata.total) && (
+            <div className="card-luxury p-4 sm:p-6 space-y-3 animate-fade-in">
+              <h2 className="text-lg font-semibold text-gradient-gold mb-3">Bill Details</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                {metadata.merchantName && (
+                  <div className="flex items-center gap-2">
+                    <Store className="h-4 w-4 text-primary" />
+                    <span className="text-muted-foreground">Merchant:</span>
+                    <span className="font-medium">{metadata.merchantName}</span>
+                  </div>
+                )}
+                {metadata.billNumber && (
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="text-muted-foreground">Bill #:</span>
+                    <span className="font-medium">{metadata.billNumber}</span>
+                  </div>
+                )}
+                {metadata.date && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span className="text-muted-foreground">Date:</span>
+                    <span className="font-medium">{metadata.date}</span>
+                  </div>
+                )}
+                {metadata.total && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Total:</span>
+                    <span className="font-bold text-primary">₹{metadata.total.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+              {metadata.subtotal && metadata.tax && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-2 border-t border-muted">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span className="font-medium">₹{metadata.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tax:</span>
+                    <span className="font-medium">₹{metadata.tax.toFixed(2)}</span>
+                  </div>
+                  {metadata.discount && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Discount:</span>
+                      <span className="font-medium text-success">-₹{metadata.discount.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4">
             {items.map((item, index) => (
               <div 
                 key={item.id}
-                className={`card-luxury p-6 animate-fade-in transition-all ${
+                className={`card-luxury p-4 sm:p-6 animate-fade-in transition-all ${
                   item.confidence < 70 ? 'border-warning' : 'hover:border-primary/50'
                 }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="space-y-4">
                   {/* Header with confidence indicator */}
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-3">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex-1 w-full space-y-3">
                       {editingId === item.id ? (
                         <Input
                           value={item.name}
                           onChange={(e) => updateItem(item.id, 'name', e.target.value)}
                           onBlur={() => setEditingId(null)}
                           autoFocus
-                          className="text-lg font-medium"
+                          className="text-base sm:text-lg font-medium"
                         />
                       ) : (
                         <div>
-                          <h3 className="text-lg font-medium flex items-center gap-2">
+                          <h3 className="text-base sm:text-lg font-medium flex flex-wrap items-center gap-2">
                             {item.name}
                             {item.confidence < 70 && (
-                              <span className="text-xs px-2 py-1 rounded-full bg-warning/20 text-warning">
+                              <span className="text-xs px-2 py-1 rounded-full bg-warning/20 text-warning whitespace-nowrap">
                                 Low confidence ({item.confidence}%)
                               </span>
                             )}
@@ -204,14 +254,14 @@ const Review = () => {
                         </div>
                       )}
                       
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                           <span className="text-sm text-muted-foreground">Price:</span>
                           <Input
                             type="number"
                             value={item.price}
                             onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value))}
-                            className="w-24 h-8"
+                            className="w-20 sm:w-24 h-8"
                           />
                         </div>
                         
@@ -238,8 +288,8 @@ const Review = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-3">
-                      <span className="text-xl font-bold text-primary">
+                    <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                      <span className="text-lg sm:text-xl font-bold text-primary">
                         ₹{(item.price * item.quantity).toFixed(2)}
                       </span>
                       <div className="flex gap-2">
@@ -274,12 +324,12 @@ const Review = () => {
             </div>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center px-4">
             <Button 
               variant="luxury" 
               size="lg"
               onClick={handleContinue}
-              className="min-w-[200px]"
+              className="w-full sm:w-auto min-w-[200px]"
             >
               Continue to Add People
             </Button>
