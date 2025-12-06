@@ -8,7 +8,53 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Luxury Fintech Theme - Bill Buddy */
+    /* Light Mode - Luxury Fintech Theme */
+    --background: 40 33% 96%;  /* Warm cream */
+    --foreground: 221 47% 11%; /* Dark text */
+
+    --card: 0 0% 100%;         /* White cards */
+    --card-foreground: 221 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 221 47% 11%;
+
+    --primary: 37 55% 45%;     /* Deeper Gold for contrast */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 33 30% 90%;   /* Light sand */
+    --secondary-foreground: 221 47% 11%;
+
+    --muted: 40 20% 90%;       /* Light muted */
+    --muted-foreground: 221 20% 40%;
+
+    --accent: 37 55% 45%;      /* Gold accent */
+    --accent-foreground: 0 0% 100%;
+
+    --success: 146 60% 40%;    /* Darker mint for contrast */
+    --warning: 38 90% 50%;     /* Amber */
+    --destructive: 354 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 85%;
+    --input: 40 20% 90%;
+    --ring: 37 55% 45%;
+
+    --radius: 0.75rem;
+
+    /* Gradient definitions */
+    --gradient-gold: linear-gradient(135deg, hsl(37 55% 45%) 0%, hsl(37 65% 55%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(40 33% 96%) 0%, hsl(40 33% 92%) 100%);
+    
+    /* Shadows */
+    --shadow-gold: 0 4px 20px -2px hsl(37 55% 45% / 0.25);
+    --shadow-card: 0 8px 32px -8px hsl(221 47% 11% / 0.1);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    /* Dark Mode - Luxury Fintech Theme */
     --background: 221 47% 7%;  /* Obsidian Black #0A0F1C */
     --foreground: 0 0% 100%;   /* White */
 
@@ -39,8 +85,6 @@ All colors MUST be HSL.
     --input: 221 27% 16%;
     --ring: 37 42% 62%;
 
-    --radius: 0.75rem;
-
     /* Gradient definitions */
     --gradient-gold: linear-gradient(135deg, hsl(37 42% 62%) 0%, hsl(37 52% 72%) 100%);
     --gradient-dark: linear-gradient(180deg, hsl(221 47% 7%) 0%, hsl(221 47% 9%) 100%);
@@ -48,19 +92,20 @@ All colors MUST be HSL.
     /* Shadows */
     --shadow-gold: 0 4px 20px -2px hsl(37 42% 62% / 0.3);
     --shadow-card: 0 8px 32px -8px hsl(0 0% 0% / 0.4);
-    
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border transition-colors duration-300;
+  }
+
+  html {
+    @apply transition-colors duration-300;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
